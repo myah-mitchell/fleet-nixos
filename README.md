@@ -219,6 +219,8 @@ The command prints the path of the ISO in the Nix store. It carries the keys in 
 
 The installer's private key is in the ISO and in the Nix store of the machine that built it, where every local account can read it. It is worth less than a host's key: it lets a machine pass for the installer, and nothing else.
 
+The ISO also stays in the CD drive of every VM made from it, so root on any installed host can read the key from `/dev/sr0`. With it, and a way to take the address of a VM that is being installed, a machine could pass for the installer and receive that VM's host keys. Taking the ISO out of each VM after its install closes this. The repos do not do that yet, because a reset needs the ISO back in the drive first.
+
 The installer runs from memory and does four things:
 
 - It takes its address, gateway and nameservers from the cloud-init drive that Proxmox attaches, and asks DHCP when there is no drive.
