@@ -29,7 +29,6 @@ let
     "aureport"
     "aulast"
     "aulastlog"
-    "auvirt"
   ];
 
   storePathRules = [

@@ -23,7 +23,7 @@ let
 
   modeOr = fallback: mode: if mode == null then fallback else mode;
 
-  sharedFolders = lib.genAttrs (map (root: "/opt/docker/${root}") roots) (path: {
+  sharedFolders = lib.genAttrs (map (root: "/opt/docker/${root}") roots) (_: {
     d = {
       user = cfg.adminName;
       mode = "0755";

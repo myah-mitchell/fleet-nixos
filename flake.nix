@@ -56,7 +56,7 @@
       installer = lib.nixosSystem {
         modules = [
           ./modules/installer.nix
-          { fleet = fleetData.fleet; }
+          { inherit (fleetData) fleet; }
         ];
       };
 
@@ -128,7 +128,7 @@
         installer-iso = installer.config.system.build.isoImage;
       };
 
-      apps.${system} = lib.mapAttrs (name: package: {
+      apps.${system} = lib.mapAttrs (_: package: {
         type = "app";
         program = lib.getExe package;
         meta = { inherit (package.meta) description; };

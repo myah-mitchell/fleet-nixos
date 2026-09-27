@@ -34,9 +34,9 @@ in
 {
   users.mutableUsers = false;
 
-  # One password for root, the admin and the client, kept as a sha512-crypt
-  # hash. It has to be readable before the accounts are made, which is
-  # earlier than other secrets are.
+  # One password for root, the admin and the client, kept as a hash. It
+  # has to be readable before the accounts are made, which is earlier than
+  # other secrets are.
   sops.secrets.server-password-hash.neededForUsers = true;
 
   users.users = {

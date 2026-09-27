@@ -3,7 +3,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -86,7 +85,5 @@ in
         docker network inspect proxy > /dev/null 2>&1 || docker network create proxy
       '';
     };
-
-    environment.systemPackages = [ pkgs.docker-compose ];
   };
 }
