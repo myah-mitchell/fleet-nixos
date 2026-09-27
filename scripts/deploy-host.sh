@@ -70,6 +70,8 @@ done
 [[ ${#positional[@]} -eq 2 ]] || fail "expected a host and an address, see --help"
 host=${positional[0]}
 address=${positional[1]}
+[[ $host =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]] || fail "'$host' is not a host name: letters, digits, - and _ only"
+[[ $address =~ ^[A-Za-z0-9][A-Za-z0-9.:-]*$ ]] || fail "'$address' is not an address"
 
 case "$build_on" in
   local | remote) ;;

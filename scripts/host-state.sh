@@ -48,6 +48,7 @@ while [[ $# -gt 0 ]]; do
 done
 [[ ${#positional[@]} -eq 1 ]] || fail "expected one address, see --help"
 address=${positional[0]}
+[[ $address =~ ^[A-Za-z0-9][A-Za-z0-9.:-]*$ ]] || fail "'$address' is not an address"
 
 # The host key is not checked. The installer makes new keys at every boot,
 # and nothing secret is sent.

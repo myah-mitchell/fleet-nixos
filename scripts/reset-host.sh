@@ -59,6 +59,8 @@ done
 [[ -n $host ]] || fail "--yes-wipe <host> is required, see --help"
 [[ ${#positional[@]} -eq 1 ]] || fail "expected one address, see --help"
 address=${positional[0]}
+[[ $host =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]] || fail "'$host' is not a host name: letters, digits, - and _ only"
+[[ $address =~ ^[A-Za-z0-9][A-Za-z0-9.:-]*$ ]] || fail "'$address' is not an address"
 
 ssh_options=(
   -o BatchMode=yes
@@ -77,15 +79,23 @@ fi
 
 os_disk=/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi0
 
+# Docker stops first, so that the containers' data on the persistent disk
+# is written out and closed while the host still works as usual.
+#
 # The host cannot shut down in the usual way once the start of its disk is
 # gone, since any program it has not run lately can no longer be read. So
 # the reboot is the kernel's own, asked for through sysrq, which needs no
-# program. sleep runs once before the wipe, so that it is in memory when
-# it is needed after it. The reboot waits two seconds in the background,
-# which lets this login end first.
+# program. Before it, sysrq writes out what is still in memory (s) and
+# makes every filesystem read-only (u). sleep runs once before the wipe, so
+# that it is in memory when it is needed after it. The reboot waits two
+# seconds in the background, which lets this login end first.
 wipe="sleep 0
+if systemctl cat docker.service >/dev/null 2>&1; then
+  systemctl stop docker.socket docker.service || exit 1
+fi
+sync
 dd if=/dev/zero of=$os_disk bs=1M count=16 conv=fsync status=none || exit 1
-(sleep 2; echo b > /proc/sysrq-trigger) </dev/null >/dev/null 2>&1 &"
+(sleep 2; echo s > /proc/sysrq-trigger; sleep 1; echo u > /proc/sysrq-trigger; sleep 1; echo b > /proc/sysrq-trigger) </dev/null >/dev/null 2>&1 &"
 
 # shellcheck disable=SC2029 # the commands are meant to be filled in here
 if ! ssh "${ssh_options[@]}" "$user@$address" "sudo sh -c '$wipe'" </dev/null; then
