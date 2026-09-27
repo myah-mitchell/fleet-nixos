@@ -278,7 +278,7 @@ In this order:
 5. Writes the host's SSH keys to `/srv/persist/host/ssh`.
 6. Runs the install phase of nixos-anywhere and reboots.
 
-Every connection `install-host` makes itself accepts the installer's host key and no other, and those connections carry the host's keys. nixos-anywhere makes its own connections and checks no host key: it passes `StrictHostKeyChecking=no` first, and ssh keeps the first value it gets for an option, so `--ssh-option` cannot change it. What nixos-anywhere sends is the system and the disk layout, which hold no secret in the clear. A machine that could take the installer's address between the two checks could still change what gets installed.
+Every connection `install-host` makes itself accepts the installer's host key and no other, and those connections carry the host's keys. nixos-anywhere makes its own connections and checks no host key: it passes `StrictHostKeyChecking=no` first, and ssh keeps the first value it gets for an option, so `--ssh-option` cannot change it. What nixos-anywhere sends is the system and the disk layout, which hold no secret in the clear. A machine that could take the installer's address between the two checks could still change what gets installed. None of the fleet's commands forward the SSH agent, since several of them connect before any key is checked.
 
 nixos-anywhere cannot override a flake input. `install-host` therefore writes a small flake in a temporary folder that re-exports this flake's hosts with the fleet input set to `<fleet-dir>`, and hands that one to nixos-anywhere.
 
@@ -300,7 +300,7 @@ nix run .#reset-host -- --yes-wipe <host> <address>
 
 The command overwrites the first 16 MiB of scsi0 and reboots the host. The BIOS finds nothing to boot on the disk and starts the installer ISO. The persistent disk is not touched, so the install that follows finds the host's data and keys where they were.
 
-`reset-host` reads `/etc/fleet-host` on the target and compares it with the name after `--yes-wipe`. It does nothing when they differ. Before the wipe it stops Docker, so that the containers' data on the persistent disk is written out, and before the reboot the kernel writes out what is left and makes every filesystem read-only.
+`reset-host` reads `/etc/fleet-host` on the target and compares it with the name after `--yes-wipe`. It does nothing when they differ. Before the wipe it stops every container and then Docker itself, so that the containers' data on the persistent disk is written out. Stopping Docker alone would not do it, because Docker runs with live-restore and leaves the containers running. Before the reboot the kernel writes out what is left and makes every filesystem read-only.
 
 > [!WARNING]
 > A reset destroys everything on the OS disk. The install after it also wipes the Docker disk.

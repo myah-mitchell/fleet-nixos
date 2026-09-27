@@ -61,10 +61,12 @@ done
 address=${positional[0]}
 [[ $host =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]] || fail "'$host' is not a host name: letters, digits, - and _ only"
 [[ $address =~ ^[A-Za-z0-9][A-Za-z0-9.:-]*$ ]] || fail "'$address' is not an address"
+[[ $user =~ ^[a-z_][a-z0-9_-]*$ ]] || fail "'$user' is not an account name"
 
 ssh_options=(
   -o BatchMode=yes
   -o ConnectTimeout=10
+  -o ForwardAgent=no
   -o StrictHostKeyChecking=no
   -o UserKnownHostsFile=/dev/null
   -o LogLevel=ERROR
@@ -79,8 +81,9 @@ fi
 
 os_disk=/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi0
 
-# Docker stops first, so that the containers' data on the persistent disk
-# is written out and closed while the host still works as usual.
+# The containers stop first, so that their data on the persistent disk is
+# written out and closed while the host still works as usual. Stopping
+# dockerd alone would leave them running, since live-restore is on.
 #
 # The host cannot shut down in the usual way once the start of its disk is
 # gone, since any program it has not run lately can no longer be read. So
@@ -91,6 +94,10 @@ os_disk=/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi0
 # seconds in the background, which lets this login end first.
 wipe="sleep 0
 if systemctl cat docker.service >/dev/null 2>&1; then
+  ids=\$(docker ps -q) || exit 1
+  if [ -n \"\$ids\" ]; then
+    docker stop \$ids >/dev/null || exit 1
+  fi
   systemctl stop docker.socket docker.service || exit 1
 fi
 sync
