@@ -4,7 +4,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -40,12 +39,9 @@ in
   sops.secrets.server-password-hash.neededForUsers = true;
 
   users.users = {
-    # The password works on the console only. Root cannot log in over SSH
-    # and has no shell to be switched into.
-    root = {
-      hashedPasswordFile = passwordFile;
-      shell = "${pkgs.shadow}/bin/nologin";
-    };
+    # The password works on the console only, which is the way in when
+    # SSH does not work. sshd refuses root.
+    root.hashedPasswordFile = passwordFile;
 
     ${cfg.adminName} = person // {
       hashedPasswordFile = passwordFile;
