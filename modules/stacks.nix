@@ -107,6 +107,28 @@ in
           iptables -A nixos-fw -p ${rule.proto} -s ${lib.escapeShellArg cfg.internalSubnet} --dport ${toString rule.port} -j nixos-fw-accept
         '') (rulesFor "internal");
       })
+
+      # A port that Docker publishes never reaches the rules above. Docker
+      # sends the connection on to the container in the FORWARD chain, and
+      # the NixOS firewall filters INPUT. So a published port that is meant
+      # for the internal subnet only is closed to every other address in
+      # DOCKER-USER, the chain Docker leaves to the host. The rule matches
+      # the port the connection was made to, before Docker rewrote it.
+      #
+      # Docker makes DOCKER-USER when it starts, and keeps what is in it.
+      # The firewall may start first, so it makes the chain when it is not
+      # there yet.
+      (lib.mkIf (cfg.features.firewall && cfg.features.docker && rulesFor "internal" != [ ]) {
+        networking.firewall.extraCommands = lib.mkAfter (
+          ''
+            iptables -N DOCKER-USER 2>/dev/null || true
+            iptables -F DOCKER-USER
+          ''
+          + lib.concatMapStrings (rule: ''
+            iptables -A DOCKER-USER -i ${lib.escapeShellArg cfg.network.interface} -p ${rule.proto} -m conntrack --ctstate NEW --ctorigdstport ${toString rule.port} ! -s ${lib.escapeShellArg cfg.internalSubnet} -j DROP
+          '') (rulesFor "internal")
+        );
+      })
     ]
   );
 }
