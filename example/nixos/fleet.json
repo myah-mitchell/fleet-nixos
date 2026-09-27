@@ -1,0 +1,33 @@
+{
+  "abbrName": "ex",
+  "adminList": "exadmins@example.com",
+  "adminName": "exadmin",
+  "adminSshKeys": [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJlfGdV3OUejKj9G9L2B3AdrXvVpRP0Y/YIWRxXt8xYC example-admin"
+  ],
+  "caCertificates": [
+    {
+      "content": "-----BEGIN CERTIFICATE-----\nMIIBxzCCAW2gAwIBAgIUII65/11D2ospy+/HlcVxAHrLHe0wCgYIKoZIzj0EAwIw\nMTEQMA4GA1UECgwHRXhhbXBsZTEdMBsGA1UEAwwURXhhbXBsZSBUZXN0IFJvb3Qg\nQ0EwHhcNMjYwOTI3MTkyMzM3WhcNMzYwOTI0MTkyMzM3WjAxMRAwDgYDVQQKDAdF\neGFtcGxlMR0wGwYDVQQDDBRFeGFtcGxlIFRlc3QgUm9vdCBDQTBZMBMGByqGSM49\nAgEGCCqGSM49AwEHA0IABEJZCNX5+2i/4uFySHKVMr87t02SeNXmksLo9TbqVp7F\nzpiqn8QgMedxgjLykEQs1uC5DywzU56mZLrP7d1MTB+jYzBhMB0GA1UdDgQWBBR0\n2AQTQ/v2JpUg1f4InUaZnYgR/zAfBgNVHSMEGDAWgBR02AQTQ/v2JpUg1f4InUaZ\nnYgR/zAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBBjAKBggqhkjOPQQD\nAgNIADBFAiEAnm8WDnIJfXll+b6QeC5NO99+oKxsiyIYm4gh9prxBecCIH0fkXij\n3aXxh6JlwIK4ms8V+BhRyULaja50gLqzZAyT\n-----END CERTIFICATE-----\n",
+      "name": "Example Test Root CA"
+    }
+  ],
+  "clientAccount": "clientuser",
+  "clientSshKeys": [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJukIuOWYB9eYylsHKdltt3w8gqovGMUrWrYu291Wipj example-client"
+  ],
+  "deployAccount": "ansible",
+  "deploySshKeys": [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII+LvUx8tun9nH3oBy5YNg4kqFXE43Qbtpjl4cBrvS8W example-deploy"
+  ],
+  "domainName": "example.com",
+  "komodoCoreAddress": "https://komodo.h.example.com",
+  "komodoCorePublicKey": "MCowBQYDK2VuAyEA0/mEVDW8IZGwv0AWj+CgcCzORgLT2V/sAHwZERow7zo=",
+  "locationAbbr": "h",
+  "locationDomain": "h.example.com",
+  "ntpServers": [
+    "time.example.com"
+  ],
+  "shortName": "EXAMPLE",
+  "sshBannerBody": "This system is for authorized use only.\nActivity on it is logged.",
+  "timeZone": "America/Chicago"
+}

@@ -1,0 +1,4 @@
+# Reads of the kernel's tracing and debug filesystems produce many events
+# and say nothing about who changed what.
+-a never,filesystem -F fstype=tracefs
+-a never,filesystem -F fstype=debugfs

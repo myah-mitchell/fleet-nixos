@@ -1,0 +1,4 @@
+# Connections made and accepted, and the host's name being changed.
+-a always,exit -F arch=b64 -S accept,connect -F key=external-access
+-a always,exit -F arch=b32 -S sethostname -F key=hostname
+-a always,exit -F arch=b64 -S sethostname -F key=hostname

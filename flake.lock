@@ -1,0 +1,82 @@
+{
+  "nodes": {
+    "disko": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789770686,
+        "narHash": "sha256-uZkBR7yHdIKUFB5SZdfgh1qkGfI3XmYmI/lTiquxbck=",
+        "owner": "nix-community",
+        "repo": "disko",
+        "rev": "725ea35e410ad83be4931d1bff7e090eacaf3563",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "disko",
+        "type": "github"
+      }
+    },
+    "fleet": {
+      "flake": false,
+      "locked": {
+        "path": "./example",
+        "type": "path"
+      },
+      "original": {
+        "path": "./example",
+        "type": "path"
+      },
+      "parent": []
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1790450978,
+        "narHash": "sha256-/eLCD/X9kaWJqPR47+fDozEC87Hjmm3i8gJbYmDAD7g=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "5e2305d577ca00acbba631b05cb1094d172b29f3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-26.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "disko": "disko",
+        "fleet": "fleet",
+        "nixpkgs": "nixpkgs",
+        "sops-nix": "sops-nix"
+      }
+    },
+    "sops-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790498116,
+        "narHash": "sha256-rs9meAYxW3zzrh43yaW7htrqCD+X9+pupDPHN86fumI=",
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "rev": "5efb5a6f4f5ab192817d28557dd4d650fa14d866",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

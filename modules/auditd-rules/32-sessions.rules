@@ -1,0 +1,4 @@
+# The records of who is and was logged in, and of failed logins.
+-a always,exit -F path=/run/utmp -F perm=wa -F auid>=1000 -F auid!=unset -F key=session
+-a always,exit -F path=/var/log/btmp -F perm=wa -F auid>=1000 -F auid!=unset -F key=session
+-a always,exit -F path=/var/log/wtmp -F perm=wa -F auid>=1000 -F auid!=unset -F key=session

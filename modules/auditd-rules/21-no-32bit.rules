@@ -1,0 +1,4 @@
+# Programs built for 32 bit use a second set of system calls, which is a
+# known way around rules written for the 64 bit set. No program on these
+# hosts is 32 bit, so every such call is recorded.
+-a always,exit -F arch=b32 -S all -F key=32bit-abi

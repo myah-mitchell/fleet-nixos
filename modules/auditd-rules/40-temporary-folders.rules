@@ -1,0 +1,3 @@
+# The folders anyone may write to: files made, changed or run there.
+-w /tmp/ -p wxa -k tmp
+-w /var/tmp/ -p wxa -k tmp

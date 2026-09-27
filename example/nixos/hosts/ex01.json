@@ -1,0 +1,210 @@
+{
+  "features": {
+    "auditd": true,
+    "docker": true,
+    "fail2ban": true,
+    "firewall": true,
+    "komodo": true,
+    "mail": true,
+    "mosh": true,
+    "nodeExporter": true
+  },
+  "hostName": "ex01",
+  "internalSubnet": "192.0.2.0/24",
+  "network": {
+    "address": "192.0.2.110",
+    "dns": [
+      "192.0.2.1"
+    ],
+    "gateway": "192.0.2.1",
+    "interface": "ens18",
+    "prefixLength": 24
+  },
+  "stacks": {
+    "files": [
+      {
+        "content": "# mailrise.conf. Copy to mailrise.conf and fill in the ntfy token.\n#\n# Mailrise routes by recipient address. A key with no domain, like \"backups\",\n# matches only <key>@mailrise.xyz, mailrise's own placeholder domain, and mail\n# to any other domain is refused. Point PBS/PVE notification targets at the\n# matching address below.\n\nlisten:\n  smtp:\n    hostname: 0.0.0.0\n    port: 8025\n\nconfigs:\n  # PBS and PVE notifications -> to: backups@mailrise.xyz\n  backups:\n    urls:\n      - \"ntfy://REPLACE_WITH_NTFY_TOKEN@ntfy/alerts-backups\"\n\n  # Everything else -> to: infra@mailrise.xyz. vmalert's Alertmanager webhook\n  # can hit ntfy's own HTTP API directly instead of going through mailrise; see\n  # Phase 2's vmalert -> ntfy wiring.\n  infra:\n    urls:\n      - \"ntfy://REPLACE_WITH_NTFY_TOKEN@ntfy/alerts-infra\"\n",
+        "group": 101000,
+        "mode": "0600",
+        "owner": 101000,
+        "path": "mailrise-secrets/mailrise.conf",
+        "project": "core"
+      },
+      {
+        "content": "modules:\n  http_2xx:\n    prober: http\n    timeout: 5s\n    http:\n      valid_http_versions: [\"HTTP/1.1\", \"HTTP/2.0\"]\n      valid_status_codes: [] # defaults to 2xx\n      method: GET\n      preferred_ip_protocol: \"ip4\"\n\n  tcp_connect:\n    prober: tcp\n    timeout: 5s\n\n  icmp:\n    prober: icmp\n    timeout: 5s\n    icmp:\n      preferred_ip_protocol: \"ip4\"\n\n  dns_udp:\n    prober: dns\n    timeout: 5s\n    dns:\n      query_name: \"example.com\"\n      query_type: \"A\"\n      valid_rcodes:\n        - NOERROR\n",
+        "group": 101000,
+        "mode": null,
+        "owner": 101000,
+        "path": "blackbox-exporter-config/blackbox.yml",
+        "project": "core"
+      }
+    ],
+    "firewall": [
+      {
+        "allowFrom": "internal",
+        "comment": "Vector syslog",
+        "port": 5140,
+        "proto": "tcp"
+      },
+      {
+        "allowFrom": "internal",
+        "comment": "Vector syslog",
+        "port": 5140,
+        "proto": "udp"
+      },
+      {
+        "allowFrom": "internal",
+        "comment": "Dozzle agent",
+        "port": 7007,
+        "proto": "tcp"
+      },
+      {
+        "allowFrom": "any",
+        "comment": "Traefik HTTP",
+        "port": 80,
+        "proto": "tcp"
+      },
+      {
+        "allowFrom": "any",
+        "comment": "Traefik HTTPS",
+        "port": 443,
+        "proto": "tcp"
+      },
+      {
+        "allowFrom": "any",
+        "comment": "Traefik HTTPS (alt)",
+        "port": 8443,
+        "proto": "tcp"
+      },
+      {
+        "allowFrom": "internal",
+        "comment": "Mailrise SMTP",
+        "port": 8025,
+        "proto": "tcp"
+      },
+      {
+        "allowFrom": "internal",
+        "comment": "Postfix SMTP",
+        "port": 25,
+        "proto": "tcp"
+      }
+    ],
+    "folders": [
+      {
+        "group": 101000,
+        "mode": null,
+        "owner": 101000,
+        "path": "vmagent-data",
+        "project": "system",
+        "root": "volumes"
+      },
+      {
+        "group": 101000,
+        "mode": null,
+        "owner": 101000,
+        "path": "vlagent-data",
+        "project": "system",
+        "root": "volumes"
+      },
+      {
+        "group": 101000,
+        "mode": null,
+        "owner": 101000,
+        "path": "vector-data",
+        "project": "system",
+        "root": "volumes"
+      },
+      {
+        "group": 100000,
+        "mode": null,
+        "owner": 100000,
+        "path": "dockns-data",
+        "project": "system",
+        "root": "volumes"
+      },
+      {
+        "group": 101000,
+        "mode": "0755",
+        "owner": 101000,
+        "path": "traefik",
+        "project": "traefik",
+        "root": "logs"
+      },
+      {
+        "group": 101000,
+        "mode": null,
+        "owner": 101000,
+        "path": "traefik-certs",
+        "project": "traefik",
+        "root": "volumes"
+      },
+      {
+        "group": 101000,
+        "mode": null,
+        "owner": 101000,
+        "path": "traefik-plugins",
+        "project": "traefik",
+        "root": "volumes"
+      },
+      {
+        "group": 101000,
+        "mode": null,
+        "owner": 101000,
+        "path": "ntfy-data",
+        "project": "core",
+        "root": "volumes"
+      },
+      {
+        "group": 101000,
+        "mode": "0700",
+        "owner": 101000,
+        "path": "mailrise-secrets",
+        "project": "core",
+        "root": "volumes"
+      },
+      {
+        "group": 100000,
+        "mode": null,
+        "owner": 100000,
+        "path": "postfix-data",
+        "project": "core",
+        "root": "volumes"
+      },
+      {
+        "group": 101000,
+        "mode": null,
+        "owner": 101000,
+        "path": "mailpit-data",
+        "project": "core",
+        "root": "volumes"
+      },
+      {
+        "group": 101000,
+        "mode": null,
+        "owner": 101000,
+        "path": "blackbox-exporter-config",
+        "project": "core",
+        "root": "volumes"
+      },
+      {
+        "group": 101000,
+        "mode": null,
+        "owner": 101000,
+        "path": "uptime-kuma-data",
+        "project": "core",
+        "root": "volumes"
+      }
+    ],
+    "names": [
+      "system-agent",
+      "traefik-agent",
+      "core-infra"
+    ],
+    "projects": [
+      "system",
+      "traefik",
+      "core"
+    ]
+  },
+  "swapMiB": 512
+}

@@ -1,0 +1,8 @@
+# The programs that run with more rights than their caller, such as sudo,
+# su, mount and passwd. NixOS keeps all of them below /run/wrappers and
+# nowhere else.
+-a always,exit -F dir=/run/wrappers/ -F perm=x -F auid>=1000 -F auid!=unset -F key=privileged
+
+# A program started with root's rights by a user who is not root.
+-a always,exit -F arch=b64 -S execve -C uid!=euid -F euid=0 -F key=elevated-privs-setuid
+-a always,exit -F arch=b32 -S execve -C uid!=euid -F euid=0 -F key=elevated-privs-setuid

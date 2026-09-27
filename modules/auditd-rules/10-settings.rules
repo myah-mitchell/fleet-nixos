@@ -1,0 +1,13 @@
+# How the kernel treats the rules and the events they produce.
+
+# A process that logs an event while the queue is full waits up to a
+# minute for room, instead of losing the event.
+--backlog_wait_time 60000
+
+# The login id a session starts with stays with every process it starts,
+# whatever user that process later becomes. Nothing can change it.
+--loginuid-immutable
+
+# A rule that cannot be loaded is reported and skipped, and the rules after
+# it are still loaded.
+-c

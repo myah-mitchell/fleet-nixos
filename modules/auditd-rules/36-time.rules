@@ -1,0 +1,6 @@
+# The clock being set. Records are only worth something when their times
+# can be trusted.
+-a always,exit -F arch=b32 -S adjtimex,settimeofday,stime -F key=time-change
+-a always,exit -F arch=b64 -S adjtimex,settimeofday -F key=time-change
+-a always,exit -F arch=b32 -S clock_settime -F a0=0x0 -F key=time-change
+-a always,exit -F arch=b64 -S clock_settime -F a0=0x0 -F key=time-change

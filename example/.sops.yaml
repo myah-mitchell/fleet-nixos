@@ -1,0 +1,31 @@
+# Who can decrypt each sops file of the example fleet. The private halves of
+# every key named here are in keys/, in the open, so these files protect
+# nothing. A real fleet has the same rules with its own keys.
+#
+#   admin   stands for a person
+#   deploy  stands for what the install and deploy commands decrypt with,
+#           from SOPS_AGE_KEY or SOPS_AGE_KEY_FILE
+#
+# The entry of a host, and the rules that name it, are written by
+# new-host-key.
+keys:
+  - &admin age1a3f6laceen7gffx65jlhnd0u6fmaxmw92xp9tmhd73tjqfcdcp3q9a7q26
+  - &deploy age1svxk34nmzqrwl84nd3wywx9jmudl33k479tlum8uxwkqztqs6g9qk8mfkc
+  - &ex01 age1623a3n8m6dkawwn2um6kzrrhvuys5r90gc84klrpnueln28m0vqs806lef
+  - &ex02 age1e5fqcgg0349apkmdm7jzy9elkv5kran9dyuxswyrh84kmqp70g6sqxjw0k
+creation_rules:
+  # The secrets every host reads.
+  - path_regex: ^secrets/fleet\.yaml$
+    key_groups:
+      - age: [*admin, *deploy, *ex01, *ex02]
+  - path_regex: ^secrets/hosts/ex01\.yaml$
+    key_groups:
+      - age: [*admin, *deploy, *ex01]
+  - path_regex: ^secrets/hosts/ex02\.yaml$
+    key_groups:
+      - age: [*admin, *deploy, *ex02]
+  # Every host's SSH host keys. A host never reads them. The install puts
+  # them on the host.
+  - path_regex: ^secrets/host-keys/[^/]+\.yaml$
+    key_groups:
+      - age: [*admin, *deploy]
