@@ -387,6 +387,7 @@ Checked on 2026-09-27 with Determinate Nix 3.21.1 on a workstation, against the 
 - `install-host`, `deploy-host` and `reset-host` stop with one line when the target does not answer, and `install-host` stops before that when the sops key is missing.
 - `build-installer` builds the ISO of the example fleet, and the ISO's closure holds the example's installer key. `new-installer-key` adds its rule once, and a second run changes nothing.
 - The ssh options `install-host` uses accept an sshd that has the installer's key, and refuse one with any other key. Tested against a local sshd.
+- `new-installer-key` puts `.sops.yaml` back when sops cannot encrypt, tested with a sops that always fails. `install-host` refuses a flake path with `"`, `\` or `${`.
 - A host's closure holds its own sops files and not the rest of the fleet's files.
 
 ## Not yet confirmed
