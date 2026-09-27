@@ -40,6 +40,11 @@ in
       AllowAgentForwarding = true;
       PermitEmptyPasswords = false;
       PermitRootLogin = "no";
+
+      # Keys only. The accounts' password is for sudo and for the Proxmox
+      # console, where a host can be reached when SSH cannot.
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
       StrictModes = true;
       MaxSessions = 2;
 
@@ -50,11 +55,6 @@ in
       ClientAliveInterval = 300;
       ClientAliveCountMax = 2;
     };
-
-    extraConfig = ''
-      Match User root
-        PasswordAuthentication no
-    '';
   };
 
   # Lets an admin hop from this host to the next one with the key held by
