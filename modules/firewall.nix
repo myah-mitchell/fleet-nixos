@@ -17,10 +17,11 @@
           ip46tables -A nixos-fw -p tcp --dport 113 -j LOG --log-level info --log-prefix "refused ident: "
           ip46tables -A nixos-fw -p tcp --dport 113 -j REJECT --reject-with tcp-reset
 
-          # SSH, with a rate limit: an address that opens six connections
-          # within thirty seconds has the sixth refused.
+          # SSH, with a rate limit: an address that opens ten connections
+          # within thirty seconds has the tenth refused. One pass of the
+          # playbooks makes about six in a row.
           ip46tables -A nixos-fw -p tcp --dport 22 -m conntrack --ctstate NEW -m recent --name ssh --set
-          ip46tables -A nixos-fw -p tcp --dport 22 -m conntrack --ctstate NEW -m recent --name ssh --update --seconds 30 --hitcount 6 -j nixos-fw-log-refuse
+          ip46tables -A nixos-fw -p tcp --dport 22 -m conntrack --ctstate NEW -m recent --name ssh --update --seconds 30 --hitcount 10 -j nixos-fw-log-refuse
           ip46tables -A nixos-fw -p tcp --dport 22 -j nixos-fw-accept
         '';
       };

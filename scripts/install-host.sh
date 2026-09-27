@@ -106,7 +106,17 @@ if [[ -d $flake ]]; then
   fi
 fi
 
-if ! has_persistent_disk=$(jq -e -r '.features.docker | tostring' "$host_file" 2>/dev/null); then
+# Both go into a generated flake.nix as Nix strings.
+for value in "$flake" "$fleet_input"; do
+  case $value in
+    *\"* | *\\* | *\$\{*)
+      fail "'$value' holds a character that cannot go into a Nix string"
+      ;;
+  esac
+done
+
+if ! jq -e '.features | has("docker")' "$host_file" >/dev/null 2>&1 \
+  || ! has_persistent_disk=$(jq -r '.features.docker | tostring' "$host_file"); then
   fail "nixos/hosts/$host.json has no features.docker"
 fi
 
@@ -137,7 +147,9 @@ done
 # nixos-anywhere makes its own connections, which check no host key: it
 # puts StrictHostKeyChecking=no first, and ssh keeps the first value it is
 # given for an option. What it sends is the system and the disk layout,
-# which hold no secret in the clear.
+# which hold no secret in the clear. It sets no ForwardAgent of its own,
+# so the one given here is the first and holds: a machine that is not the
+# installer does not get the agent.
 if ! installer_public_key=$(sops decrypt --extract '["ssh_host_ed25519_key.pub"]' "$installer_key" 2>/dev/null); then
   fail "cannot read secrets/installer.yaml, check SOPS_AGE_KEY or SOPS_AGE_KEY_FILE"
 fi
@@ -148,6 +160,7 @@ echo "$address $key_type $key_data" >"$work/known_hosts"
 ssh_options=(
   -o BatchMode=yes
   -o ConnectTimeout=10
+  -o ForwardAgent=no
   -o StrictHostKeyChecking=yes
   -o UserKnownHostsFile="$work/known_hosts"
   -o GlobalKnownHostsFile=/dev/null
@@ -187,6 +200,7 @@ nixos_anywhere=(
   --flake "path:$work/flake#$host"
   --target-host "root@$address"
   --build-on "$build_on"
+  --ssh-option ForwardAgent=no
 )
 
 if ! "${nixos_anywhere[@]}" --phases disko; then

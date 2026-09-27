@@ -73,6 +73,7 @@ done
 [[ ${#positional[@]} -eq 2 ]] || fail "expected a host and an address, see --help"
 host=${positional[0]}
 address=${positional[1]}
+[[ $user =~ ^[a-z_][a-z0-9_-]*$ ]] || fail "'$user' is not an account name"
 [[ $host =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]] || fail "'$host' is not a host name: letters, digits, - and _ only"
 [[ $address =~ ^[A-Za-z0-9][A-Za-z0-9.:-]*$ ]] || fail "'$address' is not an address"
 
@@ -101,14 +102,17 @@ fi
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
+# NIX_SSHOPTS is split on whitespace, so the path in it can hold none.
+[[ $work != *[[:space:]]* ]] || fail "the temporary folder $work has a space in its path, set TMPDIR to one without"
 
 if ! public_key=$(sops decrypt --extract '["ssh_host_ed25519_key.pub"]' "$host_keys" 2>/dev/null); then
   fail "cannot decrypt secrets/host-keys/$host.yaml, check SOPS_AGE_KEY or SOPS_AGE_KEY_FILE"
 fi
 read -r key_type key_data _ <<<"$public_key"
+[[ $key_type == ssh-ed25519 && -n $key_data ]] || fail "secrets/host-keys/$host.yaml holds no ed25519 public key"
 echo "$address $key_type $key_data" >"$work/known_hosts"
 
-export NIX_SSHOPTS="-o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$work/known_hosts -o HostKeyAlgorithms=ssh-ed25519"
+export NIX_SSHOPTS="-o BatchMode=yes -o ConnectTimeout=10 -o ForwardAgent=no -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$work/known_hosts -o HostKeyAlgorithms=ssh-ed25519"
 
 arguments=(
   "$action"

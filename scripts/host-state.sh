@@ -48,13 +48,15 @@ while [[ $# -gt 0 ]]; do
 done
 [[ ${#positional[@]} -eq 1 ]] || fail "expected one address, see --help"
 address=${positional[0]}
+[[ $user =~ ^[a-z_][a-z0-9_-]*$ ]] || fail "'$user' is not an account name"
 [[ $address =~ ^[A-Za-z0-9][A-Za-z0-9.:-]*$ ]] || fail "'$address' is not an address"
 
-# The host key is not checked. The installer makes new keys at every boot,
-# and nothing secret is sent.
+# The host key is not checked. This is a probe that sends nothing secret,
+# and it runs before anyone knows whether a host or the installer answers.
 ssh_options=(
   -o BatchMode=yes
   -o ConnectTimeout=5
+  -o ForwardAgent=no
   -o StrictHostKeyChecking=no
   -o UserKnownHostsFile=/dev/null
   -o LogLevel=ERROR

@@ -41,6 +41,7 @@
     enable = true;
     settings = {
       PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
       PermitRootLogin = "prohibit-password";
     };
     # One host key, the fleet's. sshd makes no key of its own, because the

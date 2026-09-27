@@ -92,7 +92,10 @@ if [[ -f $installer_key ]]; then
 fi
 
 # 1. The rule. It goes right before the rule for the host keys and names
-# the same keys, which are the people and the deploy key.
+# the same keys, which are the people and the deploy key. sops reads the
+# rules only from a file beside the checkout, so .sops.yaml is changed in
+# place and put back if the key cannot be encrypted.
+cp "$rules" "$work/sops.yaml.orig"
 if [[ $(rule_for "$installer_key") == null ]]; then
   keys_rule=$(rule_for secrets/host-keys/installer.yaml)
   [[ $keys_rule != null ]] || fail "no rule in .sops.yaml matches secrets/host-keys/, run new-host-key first"
@@ -116,7 +119,8 @@ ssh-keygen -q -t ed25519 -N "" -C "root@installer" -f "$work/ssh_host_ed25519_ke
   ' >"$work/key.yaml"
 )
 if ! sops --config "$rules" encrypt --filename-override "$installer_key" "$work/key.yaml" >"$work/key.encrypted.yaml"; then
-  fail "sops could not encrypt the key for $installer_key"
+  cat "$work/sops.yaml.orig" >"$rules"
+  fail "sops could not encrypt the key for $installer_key, .sops.yaml is as it was"
 fi
 mkdir -p secrets
 mv "$work/key.encrypted.yaml" "$installer_key"
