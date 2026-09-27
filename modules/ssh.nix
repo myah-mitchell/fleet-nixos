@@ -22,7 +22,7 @@ let
         passAsFile = [ "body" ];
       }
       ''
-        figlet -f big -w 100 ${lib.escapeShellArg cfg.shortName} > name
+        figlet -f big -w 100 ${lib.escapeShellArg cfg.sshBannerName} > name
         python3 ${./ssh-banner/frame_banner.py} name "$bodyPath" > $out
       '';
 in

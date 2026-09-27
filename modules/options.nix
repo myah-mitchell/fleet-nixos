@@ -107,7 +107,7 @@ in
     '';
 
     # nixos/fleet.json
-    shortName = text "The organisation's short name, drawn in large letters in the SSH banner.";
+    shortName = text "The organisation's short name.";
     abbrName = text "The organisation's abbreviation.";
     locationAbbr = text "The location's abbreviation. May be empty.";
     domainName = text "The organisation's domain.";
@@ -125,6 +125,7 @@ in
       description = "Certificate authorities the hosts trust, beyond the ones NixOS ships.";
     };
     ntpServers = textList "Time servers. Empty keeps the NixOS default pool.";
+    sshBannerName = text "The name drawn in large letters at the top of the SSH banner.";
     sshBannerBody = text "The text shown below the name in the SSH banner.";
     komodoCoreAddress = text "Address of Komodo Core, which Periphery connects to.";
     komodoCorePublicKey = text "Komodo Core's public key, which Periphery checks Core against.";

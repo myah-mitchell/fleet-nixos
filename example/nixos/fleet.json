@@ -29,5 +29,6 @@
   ],
   "shortName": "EXAMPLE",
   "sshBannerBody": "This system is for authorized use only.\nActivity on it is logged.",
+  "sshBannerName": "EXAMPLE",
   "timeZone": "America/Chicago"
 }

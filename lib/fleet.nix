@@ -25,6 +25,7 @@ let
     "ntpServers"
     "shortName"
     "sshBannerBody"
+    "sshBannerName"
     "timeZone"
   ];
 
