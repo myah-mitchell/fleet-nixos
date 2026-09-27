@@ -108,6 +108,15 @@ add_to_rule() {
   fi
 }
 
+# Nothing is changed unless the last step can succeed: encrypting a file
+# again takes a key that can decrypt it.
+for secrets in "$fleet_secrets" "$host_secrets"; do
+  [[ -f $secrets ]] || continue
+  if ! sops --config "$rules" decrypt "$secrets" >/dev/null 2>&1; then
+    fail "cannot decrypt $secrets, check SOPS_AGE_KEY or SOPS_AGE_KEY_FILE"
+  fi
+done
+
 # 1. The keys.
 keys_rule=$(rule_for "$host_keys")
 [[ $keys_rule != null ]] || fail "no rule in .sops.yaml matches $host_keys"
@@ -180,8 +189,13 @@ echo "new-host-key: $host is in .sops.yaml as $recipient"
 # 3. The files the host may now read.
 for secrets in "$fleet_secrets" "$host_secrets"; do
   [[ -f $secrets ]] || continue
-  if ! sops --config "$rules" updatekeys --yes "$secrets" >/dev/null 2>"$work/updatekeys.log"; then
-    fail "sops could not encrypt $secrets again: $(tr '\n' ' ' <"$work/updatekeys.log")"
+  cp "$secrets" "$work/before"
+  if ! sops --config "$rules" updatekeys --yes "$secrets" >/dev/null 2>&1; then
+    fail "sops could not encrypt $secrets again for the keys in .sops.yaml"
   fi
-  echo "new-host-key: encrypted $secrets again, for the keys .sops.yaml names"
+  if cmp --silent "$secrets" "$work/before"; then
+    echo "new-host-key: $secrets was already encrypted for the keys .sops.yaml names"
+  else
+    echo "new-host-key: encrypted $secrets again, for the keys .sops.yaml names"
+  fi
 done
