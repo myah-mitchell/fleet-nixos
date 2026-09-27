@@ -5,10 +5,15 @@
 #
 # This module is not part of an installed host. Of the fleet's values it
 # reads only the SSH keys.
+#
+# The ISO's SSH host key is the same at every boot and comes from the
+# fleet, so install-host can check that it talks to this system before it
+# sends a host its private keys.
 {
   config,
   lib,
   modulesPath,
+  installerHostKey,
   ...
 }:
 {
@@ -38,6 +43,20 @@
       PasswordAuthentication = false;
       PermitRootLogin = "prohibit-password";
     };
+    # One host key, the fleet's. sshd makes no key of its own, because the
+    # file is there before it starts.
+    hostKeys = lib.mkForce [
+      {
+        type = "ed25519";
+        path = "/etc/ssh/ssh_host_ed25519_key";
+      }
+    ];
+  };
+  # A copy, not a link into the store: sshd refuses a key file that others
+  # can read.
+  environment.etc."ssh/ssh_host_ed25519_key" = {
+    source = installerHostKey;
+    mode = "0600";
   };
   users.users.root.openssh.authorizedKeys.keys =
     config.fleet.adminSshKeys ++ config.fleet.deploySshKeys;

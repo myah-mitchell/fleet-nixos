@@ -14,6 +14,7 @@ nixos/hosts/ex02.json            a host without Docker
 secrets/fleet.yaml               sops file, the secrets every host reads
 secrets/host-keys/ex01.yaml      sops file, the SSH host keys of ex01
 secrets/host-keys/ex02.yaml      sops file, the SSH host keys of ex02
+secrets/installer.yaml           sops file, the installer ISO's SSH host key
 .sops.yaml                       who can decrypt which file
 keys/                            the private halves of every key, in the open
 ```

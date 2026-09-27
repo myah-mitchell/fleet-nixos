@@ -11,6 +11,7 @@ The private keys of the example fleet. They are public test keys that protect no
 | `age-deploy.txt` | age key that stands for what runs the commands. Named `deploy` in `.sops.yaml` |
 | `ex01-ssh_host_ed25519_key`, `ex01-ssh_host_rsa_key` | SSH host keys of ex01, with their `.pub` halves |
 | `ex02-ssh_host_ed25519_key`, `ex02-ssh_host_rsa_key` | SSH host keys of ex02, with their `.pub` halves |
+| `installer/ssh_host_ed25519_key` | SSH host key of the example's installer ISO, with its `.pub` half. The flake's `installer-key` input points at this folder |
 
 The host keys are copies of what `secrets/host-keys/` holds in encrypted form. The age key of a host follows from its ed25519 key:
 

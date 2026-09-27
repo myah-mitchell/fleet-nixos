@@ -2,7 +2,8 @@
 # Installs NixOS on a machine that is booted into the fleet's installer.
 #
 # In order:
-#   1. checks that the machine at the address is the installer
+#   1. checks that the machine at the address is the installer, by its SSH
+#      host key
 #   2. partitions and formats the OS disk and the Docker disk (nixos-anywhere,
 #      disko phase)
 #   3. prepares the persistent disk. It is formatted only when it holds
@@ -27,8 +28,8 @@ the fleet's installer. The OS disk and the Docker disk are wiped.
                        builds here and copies the result. Default: remote
   --help               Show this text
 
-Reading the host's keys needs the deploy key or the admin key, in
-SOPS_AGE_KEY or SOPS_AGE_KEY_FILE.
+Reading the host's keys and the installer's key needs the deploy key or
+the admin key, in SOPS_AGE_KEY or SOPS_AGE_KEY_FILE.
 END
 }
 
@@ -69,6 +70,8 @@ done
 [[ ${#positional[@]} -eq 2 ]] || fail "expected a host and an address, see --help"
 host=${positional[0]}
 address=${positional[1]}
+[[ $host =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]] || fail "'$host' is not a host name: letters, digits, - and _ only"
+[[ $address =~ ^[A-Za-z0-9][A-Za-z0-9.:-]*$ ]] || fail "'$address' is not an address"
 
 case "$build_on" in
   local | remote) ;;
@@ -81,6 +84,8 @@ host_file=$fleet_directory/nixos/hosts/$host.json
 [[ -f $host_file ]] || fail "the fleet has no nixos/hosts/$host.json"
 host_keys=$fleet_directory/secrets/host-keys/$host.yaml
 [[ -f $host_keys ]] || fail "the fleet has no secrets/host-keys/$host.yaml, make it with new-host-key"
+installer_key=$fleet_directory/secrets/installer.yaml
+[[ -f $installer_key ]] || fail "the fleet has no secrets/installer.yaml, make it with new-installer-key"
 
 # git+file takes the files git tracks and nothing else, so an ignored or
 # untracked file in the checkout never reaches the store.
@@ -125,13 +130,29 @@ for key_file in "${key_files[@]}"; do
   [[ -s $work/keys/$key_file ]] || fail "$key_file in secrets/host-keys/$host.yaml is empty"
 done
 
-# The installer makes new host keys at every boot, so there is no key to
-# check it against.
+# The installer's host key is built into the ISO. Every connection made
+# here accepts that key and no other, so the host's private keys go to the
+# fleet's installer or nowhere.
+#
+# nixos-anywhere makes its own connections, which check no host key: it
+# puts StrictHostKeyChecking=no first, and ssh keeps the first value it is
+# given for an option. What it sends is the system and the disk layout,
+# which hold no secret in the clear.
+if ! installer_public_key=$(sops decrypt --extract '["ssh_host_ed25519_key.pub"]' "$installer_key" 2>/dev/null); then
+  fail "cannot read secrets/installer.yaml, check SOPS_AGE_KEY or SOPS_AGE_KEY_FILE"
+fi
+read -r key_type key_data _ <<<"$installer_public_key"
+[[ $key_type == ssh-ed25519 && -n $key_data ]] || fail "secrets/installer.yaml holds no ed25519 public key"
+echo "$address $key_type $key_data" >"$work/known_hosts"
+
 ssh_options=(
   -o BatchMode=yes
   -o ConnectTimeout=10
-  -o StrictHostKeyChecking=no
-  -o UserKnownHostsFile=/dev/null
+  -o StrictHostKeyChecking=yes
+  -o UserKnownHostsFile="$work/known_hosts"
+  -o GlobalKnownHostsFile=/dev/null
+  -o HostKeyAlgorithms=ssh-ed25519
+  -o CheckHostIP=no
   -o LogLevel=ERROR
 )
 on_target() {
@@ -140,7 +161,7 @@ on_target() {
 }
 
 if ! on_target test -e /etc/fleet-installer </dev/null 2>/dev/null; then
-  fail "the machine at $address is not booted into the fleet's installer, so nothing was touched"
+  fail "the machine at $address is not booted into the fleet's installer, or its host key is not the installer's, so nothing was touched"
 fi
 
 # nixos-anywhere takes a flake and no input to override in it. So it is
