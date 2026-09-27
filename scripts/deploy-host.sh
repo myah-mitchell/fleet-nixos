@@ -11,7 +11,8 @@ usage() {
   cat <<'END'
 Usage: deploy-host --fleet <fleet-dir> [--flake <flake>] [--user <user>]
                    [--build-on local|remote]
-                   [--action switch|boot|test|dry-activate] <host> <address>
+                   [--action switch|boot|test|dry-activate|dry-build]
+                   <host> <address>
 
 Builds the configuration of <host> and activates it on the host at <address>.
 
@@ -22,6 +23,8 @@ Builds the configuration of <host> and activates it on the host at <address>.
   --build-on <where>   remote builds on the host, local builds here and
                        copies the result. Default: remote
   --action <action>    What nixos-rebuild does with the result. Default: switch
+                       dry-build evaluates here and prints what would be
+                       built, and neither builds nor reaches the host
   --help               Show this text
 
 Reading the host's key needs the deploy key or the admin key, in
@@ -78,8 +81,8 @@ case "$build_on" in
   *) fail "--build-on is local or remote, not '$build_on'" ;;
 esac
 case "$action" in
-  switch | boot | test | dry-activate) ;;
-  *) fail "--action is switch, boot, test or dry-activate, not '$action'" ;;
+  switch | boot | test | dry-activate | dry-build) ;;
+  *) fail "--action is switch, boot, test, dry-activate or dry-build, not '$action'" ;;
 esac
 
 [[ -d $fleet_directory ]] || fail "$fleet_directory is not a folder"
@@ -112,12 +115,13 @@ arguments=(
   --flake "$flake#$host"
   --override-input fleet "$fleet_input"
   --no-write-lock-file
-  --target-host "$user@$address"
-  --sudo
   --no-reexec
 )
-if [[ $build_on == remote ]]; then
-  arguments+=(--build-host "$user@$address")
+if [[ $action != dry-build ]]; then
+  arguments+=(--target-host "$user@$address" --sudo)
+  if [[ $build_on == remote ]]; then
+    arguments+=(--build-host "$user@$address")
+  fi
 fi
 
 if ! nixos-rebuild "${arguments[@]}"; then

@@ -165,7 +165,7 @@ nix run .#new-installer-key -- --fleet <fleet-dir>
 nix run .#build-installer -- --fleet <fleet-dir> [--flake <flake>]
 nix run .#host-state   -- [--user <user>] <address>
 nix run .#install-host -- --fleet <fleet-dir> [--flake <flake>] [--build-on local|remote] <host> <address>
-nix run .#deploy-host  -- --fleet <fleet-dir> [--flake <flake>] [--user <user>] [--build-on local|remote] [--action switch|boot|test|dry-activate] <host> <address>
+nix run .#deploy-host  -- --fleet <fleet-dir> [--flake <flake>] [--user <user>] [--build-on local|remote] [--action switch|boot|test|dry-activate|dry-build] <host> <address>
 nix run .#reset-host   -- [--user <user>] --yes-wipe <host> <address>
 ```
 
@@ -288,7 +288,7 @@ nixos-anywhere cannot override a flake input. `install-host` therefore writes a 
 nix run .#deploy-host -- --fleet <fleet-dir> <host> <address>
 ```
 
-The command runs `nixos-rebuild switch` against the host as the deploy account, which has passwordless sudo and is a Nix trusted user. With `--action dry-activate` it builds the system and prints what a switch would change, and changes nothing.
+The command runs `nixos-rebuild switch` against the host as the deploy account, which has passwordless sudo and is a Nix trusted user. With `--action dry-activate` it builds the system and prints what a switch would change, and activates nothing, though the build leaves new paths in the store where it ran. With `--action dry-build` it evaluates the system here and prints what would be built, and neither builds nor reaches the host.
 
 `deploy-host` checks the host against the ed25519 host key stored in `secrets/host-keys/<host>.yaml`. A deploy therefore needs `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE` too, and it fails when the machine at `<address>` is not the host it should be.
 
