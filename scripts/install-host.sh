@@ -219,13 +219,6 @@ echo "$address $key_type $key_data" >"$work/known_hosts"
 # private keys go to the installer in VM $vmid or nowhere. None of them
 # shares a connection that ControlMaster in an ssh configuration left open,
 # such as one host-state made, since that one's host key was never checked.
-#
-# nixos-anywhere makes its own connections, which check no host key: it
-# puts StrictHostKeyChecking=no first, and ssh keeps the first value it is
-# given for an option. What it sends is the system and the disk layout,
-# which hold no secret in the clear. It sets no ForwardAgent of its own,
-# so the one given here is the first and holds: a machine that is not the
-# installer does not get the agent.
 ssh_options=(
   -o BatchMode=yes
   -o ConnectTimeout=10
@@ -266,12 +259,30 @@ cat >"$work/flake/flake.nix" <<END
 }
 END
 
+# nixos-anywhere makes its own connections, and gives each of them
+# StrictHostKeyChecking=no and UserKnownHostsFile=/dev/null. It runs ssh,
+# and nix and ssh-copy-id run it for it, by name from PATH, and it puts no
+# ssh of its own ahead of the PATH it is started with. So it is started
+# with an ssh first on PATH that puts the options above ahead of its
+# own, and ssh keeps the first value it is given for an option. Each of
+# its connections then accepts the installer's key and no other, and gets
+# no agent.
+real_ssh=$(command -v ssh)
+mkdir "$work/bin"
+{
+  printf '#!%s\n' "$BASH"
+  printf 'exec %q' "$real_ssh"
+  printf ' %q' "${ssh_options[@]}"
+  printf ' "$@"\n'
+} >"$work/bin/ssh"
+chmod +x "$work/bin/ssh"
+
 nixos_anywhere=(
+  env "PATH=$work/bin:$PATH"
   nixos-anywhere
   --flake "path:$work/flake#$host"
   --target-host "root@$address"
   --build-on "$build_on"
-  --ssh-option ForwardAgent=no
 )
 
 if ! "${nixos_anywhere[@]}" --phases disko; then
