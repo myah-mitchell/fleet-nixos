@@ -131,6 +131,10 @@
 
       packages.${system} = commands // {
         installer-iso = installer.config.system.build.isoImage;
+        # The sops the commands use, from this flake's lock, for the places
+        # that need sops on their own: Ansible's community.sops in Semaphore
+        # reads the fleet's secrets before any command runs.
+        inherit (pkgs) sops;
       };
 
       apps.${system} = lib.mapAttrs (_: package: {

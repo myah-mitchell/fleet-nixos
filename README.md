@@ -165,6 +165,12 @@ A port that Docker publishes bypasses the NixOS firewall, because Docker passes 
 
 Every command prints its options with `--help`, exits with 0 on success, and on failure prints one line on stderr and exits with a non-zero code.
 
+The flake also has a `sops` package, the same sops the commands use, taken from the flake's lock. Semaphore's nix installs it from there, so that Ansible decrypts the fleet's secrets with a known version:
+
+```bash
+nix profile add github:myah-mitchell/nixos-fleet#sops
+```
+
 ```text
 nix run .#new-host-key -- --fleet <fleet-dir> <host>
 nix run .#build-installer -- --fleet <fleet-dir> [--flake <flake>]
