@@ -20,6 +20,15 @@
     "interface": "ens18",
     "prefixLength": 24
   },
+  "portSources": [
+    {
+      "port": 25,
+      "proto": "tcp",
+      "sources": [
+        "198.51.100.20/32"
+      ]
+    }
+  ],
   "stacks": {
     "files": [
       {

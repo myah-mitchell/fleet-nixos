@@ -97,6 +97,27 @@ let
       comment = text "What listens on the port.";
     };
   };
+  # More addresses for one port that a stack opens to the internal subnet
+  # only, for a host outside that subnet that needs this one port.
+  portSource = types.submodule {
+    options = {
+      port = mkOption {
+        type = types.port;
+        description = "The port, as a stack's firewall rule names it.";
+      };
+      proto = mkOption {
+        type = types.enum [
+          "tcp"
+          "udp"
+        ];
+        description = "The protocol, as the stack's firewall rule names it.";
+      };
+      sources = mkOption {
+        type = types.nonEmptyListOf (types.strMatching "[0-9]{1,3}(\\.[0-9]{1,3}){3}(/[0-9]{1,2})?");
+        description = "IPv4 addresses or subnets in CIDR form that may also connect to the port.";
+      };
+    };
+  };
 in
 {
   options.fleet = {
@@ -157,6 +178,10 @@ in
       description = "Size of the swap file in MiB. 0 means no swap file.";
     };
     internalSubnet = text "The subnet, in CIDR form, that ports marked internal are opened to. May be empty.";
+    portSources = mkOption {
+      type = types.listOf portSource;
+      description = "Addresses beyond internalSubnet that one internal port is opened to.";
+    };
     stacks = {
       names = textList "The stacks the host runs.";
       projects = textList "The Compose projects of those stacks.";

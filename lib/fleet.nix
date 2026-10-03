@@ -34,6 +34,7 @@ let
     "hostName"
     "internalSubnet"
     "network"
+    "portSources"
     "stacks"
     "swapMiB"
   ];
@@ -90,6 +91,12 @@ let
     "proto"
   ];
 
+  portSourceKeys = [
+    "port"
+    "proto"
+    "sources"
+  ];
+
   # Returns the value unchanged when it is an object holding every key in
   # the list, and stops the evaluation otherwise. `where` names the file and
   # the place inside it, for the message.
@@ -132,6 +139,7 @@ let
     // {
       network = requireKeys "${where}: network" networkKeys host.network;
       features = requireKeys "${where}: features" featureKeys host.features;
+      portSources = requireKeysInEach "${where}: portSources" portSourceKeys host.portSources;
       stacks = stacks // {
         folders = requireKeysInEach "${where}: stacks.folders" folderKeys stacks.folders;
         files = requireKeysInEach "${where}: stacks.files" fileKeys stacks.files;

@@ -144,6 +144,14 @@ The `stacks` object in a host's JSON file lists folders, seed files and firewall
 
 A port that Docker publishes bypasses the NixOS firewall, because Docker passes the connection to the container in the FORWARD chain and the firewall filters INPUT. On a Docker host, the stacks module therefore also drops new connections to an `internal` port in the `DOCKER-USER` chain, unless they come from `internalSubnet`. A port Docker publishes that the host's JSON file does not list is open to every address, as it was under ufw.
 
+`portSources` in a host's JSON file opens one `internal` port to more addresses, for a host outside `internalSubnet` that needs that port and no other. Each entry names a port and protocol that a stack on the host opens to `internal`, and the IPv4 addresses or subnets that may also connect to it. The stacks module accepts them in `nixos-fw` and lets them past the drop in `DOCKER-USER`. An entry that matches no such port stops the evaluation, so a typo is not silently ignored.
+
+```json
+"portSources": [
+  { "port": 6379, "proto": "tcp", "sources": ["198.51.100.20/32"] }
+]
+```
+
 ## Commands
 
 | Command | What it does |
