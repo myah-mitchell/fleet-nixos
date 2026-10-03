@@ -112,7 +112,9 @@ read -r key_type key_data _ <<<"$public_key"
 [[ $key_type == ssh-ed25519 && -n $key_data ]] || fail "secrets/host-keys/$host.yaml holds no ed25519 public key"
 echo "$address $key_type $key_data" >"$work/known_hosts"
 
-export NIX_SSHOPTS="-o BatchMode=yes -o ConnectTimeout=10 -o ForwardAgent=no -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$work/known_hosts -o HostKeyAlgorithms=ssh-ed25519"
+# ControlPath=none keeps ssh from using a connection that ControlMaster in an
+# ssh configuration left open, whose host key was not checked against this.
+export NIX_SSHOPTS="-o BatchMode=yes -o ConnectTimeout=10 -o ControlMaster=no -o ControlPath=none -o ForwardAgent=no -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$work/known_hosts -o HostKeyAlgorithms=ssh-ed25519"
 
 arguments=(
   "$action"
