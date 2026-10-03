@@ -19,14 +19,6 @@
       url = "path:./example";
       flake = false;
     };
-
-    # The installer ISO's SSH host key: a folder that holds
-    # ssh_host_ed25519_key. The default is the example's key, which is
-    # public. build-installer puts the fleet's own key in its place.
-    installer-key = {
-      url = "path:./example/keys/installer";
-      flake = false;
-    };
   };
 
   outputs =
@@ -36,7 +28,6 @@
       sops-nix,
       disko,
       fleet,
-      installer-key,
     }:
     let
       inherit (nixpkgs) lib;
@@ -63,10 +54,6 @@
       hosts = lib.mapAttrs hostSystem fleetData.hosts;
 
       installer = lib.nixosSystem {
-        specialArgs.installerHostKey = builtins.path {
-          path = installer-key.outPath + "/ssh_host_ed25519_key";
-          name = "installer-ssh-host-key";
-        };
         modules = [
           ./modules/installer.nix
           { inherit (fleetData) fleet; }
@@ -98,22 +85,10 @@
               pkgs.ssh-to-age
               pkgs.yq-go
             ];
-        new-installer-key =
-          command "new-installer-key"
-            "Make the installer ISO's SSH host key and store it in the fleet's secrets"
-            [
-              pkgs.coreutils
-              pkgs.openssh
-              pkgs.sops
-              pkgs.yq-go
-            ];
-        build-installer =
-          command "build-installer" "Build the installer ISO with the fleet's installer host key"
-            [
-              pkgs.coreutils
-              pkgs.findutils
-              pkgs.sops
-            ];
+        build-installer = command "build-installer" "Build the installer ISO with the fleet's SSH keys" [
+          pkgs.coreutils
+          pkgs.findutils
+        ];
         host-state = command "host-state" "Print installer, installed, or unreachable for an address" [
           pkgs.bash
           pkgs.coreutils
@@ -122,6 +97,7 @@
         install-host = command "install-host" "Install NixOS on a host that is booted into the installer" [
           pkgs.age
           pkgs.coreutils
+          pkgs.gnugrep
           pkgs.jq
           pkgs.nixos-anywhere
           pkgs.openssh

@@ -32,18 +32,6 @@
       },
       "parent": []
     },
-    "installer-key": {
-      "flake": false,
-      "locked": {
-        "path": "./example/keys/installer",
-        "type": "path"
-      },
-      "original": {
-        "path": "./example/keys/installer",
-        "type": "path"
-      },
-      "parent": []
-    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1790450978,
@@ -64,7 +52,6 @@
       "inputs": {
         "disko": "disko",
         "fleet": "fleet",
-        "installer-key": "installer-key",
         "nixpkgs": "nixpkgs",
         "sops-nix": "sops-nix"
       }

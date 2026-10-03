@@ -2,8 +2,9 @@
 # Installs NixOS on a machine that is booted into the fleet's installer.
 #
 # In order:
-#   1. checks that the machine at the address is the installer, by its SSH
-#      host key
+#   1. reads the installer's SSH host key from the VM's guest agent, through
+#      the Proxmox host, and checks that the machine at the address is the
+#      installer and answers with that key
 #   2. partitions and formats the OS disk and the Docker disk (nixos-anywhere,
 #      disko phase)
 #   3. prepares the persistent disk. It is formatted only when it holds
@@ -15,21 +16,30 @@ set -euo pipefail
 
 usage() {
   cat <<'END'
-Usage: install-host --fleet <fleet-dir> [--flake <flake>]
-                    [--build-on local|remote] <host> <address>
+Usage: install-host --fleet <fleet-dir> --proxmox <user@address>
+                    --proxmox-host-key <key> --vmid <vmid>
+                    [--flake <flake>] [--build-on local|remote]
+                    <host> <address>
 
 Installs <host> on the machine at <address>, which has to be booted into
 the fleet's installer. The OS disk and the Docker disk are wiped.
 
   --fleet <fleet-dir>  Checkout of the repository that describes the fleet
+  --proxmox <user@address>
+                       Login on the Proxmox node that runs the VM. The
+                       account needs sudo without a password, for qm
+  --proxmox-host-key <key>
+                       The node's SSH host key, as "ssh-ed25519 AAAA...".
+                       No other key is accepted from the node
+  --vmid <vmid>        The VM's ID on that node
   --flake <flake>      The flake to build from. Default: the flake this
                        command came from
   --build-on <where>   remote builds on the machine being installed, local
                        builds here and copies the result. Default: remote
   --help               Show this text
 
-Reading the host's keys and the installer's key needs the deploy key or
-the admin key, in SOPS_AGE_KEY or SOPS_AGE_KEY_FILE.
+Reading the host's keys needs the deploy key or the admin key, in
+SOPS_AGE_KEY or SOPS_AGE_KEY_FILE.
 END
 }
 
@@ -39,6 +49,9 @@ fail() {
 }
 
 fleet_directory=
+proxmox=
+proxmox_host_key=
+vmid=
 flake=$FLEET_DEFAULT_FLAKE
 build_on=remote
 positional=()
@@ -48,10 +61,13 @@ while [[ $# -gt 0 ]]; do
       usage
       exit 0
       ;;
-    --fleet | --flake | --build-on)
+    --fleet | --proxmox | --proxmox-host-key | --vmid | --flake | --build-on)
       [[ $# -ge 2 ]] || fail "$1 needs a value"
       case "$1" in
         --fleet) fleet_directory=$2 ;;
+        --proxmox) proxmox=$2 ;;
+        --proxmox-host-key) proxmox_host_key=$2 ;;
+        --vmid) vmid=$2 ;;
         --flake) flake=$2 ;;
         --build-on) build_on=$2 ;;
       esac
@@ -67,11 +83,19 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 [[ -n $fleet_directory ]] || fail "--fleet <fleet-dir> is required, see --help"
+[[ -n $proxmox ]] || fail "--proxmox <user@address> is required, see --help"
+[[ -n $proxmox_host_key ]] || fail "--proxmox-host-key <key> is required, see --help"
+[[ -n $vmid ]] || fail "--vmid <vmid> is required, see --help"
 [[ ${#positional[@]} -eq 2 ]] || fail "expected a host and an address, see --help"
 host=${positional[0]}
 address=${positional[1]}
 [[ $host =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]] || fail "'$host' is not a host name: letters, digits, - and _ only"
 [[ $address =~ ^[A-Za-z0-9][A-Za-z0-9.:-]*$ ]] || fail "'$address' is not an address"
+[[ $proxmox =~ ^[a-z_][a-z0-9_-]*@[A-Za-z0-9][A-Za-z0-9.:-]*$ ]] || fail "'$proxmox' is not a login, give it as user@address"
+[[ $vmid =~ ^[1-9][0-9]*$ ]] || fail "'$vmid' is not a VMID"
+read -r proxmox_key_type proxmox_key_data _ <<<"$proxmox_host_key"
+[[ $proxmox_key_type == ssh-* && $proxmox_key_data =~ ^[A-Za-z0-9+/]+=*$ ]] \
+  || fail "--proxmox-host-key is not an SSH public key, give it as \"ssh-ed25519 AAAA...\""
 
 case "$build_on" in
   local | remote) ;;
@@ -84,8 +108,6 @@ host_file=$fleet_directory/nixos/hosts/$host.json
 [[ -f $host_file ]] || fail "the fleet has no nixos/hosts/$host.json"
 host_keys=$fleet_directory/secrets/host-keys/$host.yaml
 [[ -f $host_keys ]] || fail "the fleet has no secrets/host-keys/$host.yaml, make it with new-host-key"
-installer_key=$fleet_directory/secrets/installer.yaml
-[[ -f $installer_key ]] || fail "the fleet has no secrets/installer.yaml, make it with new-installer-key"
 
 # git+file takes the files git tracks and nothing else, so an ignored or
 # untracked file in the checkout never reaches the store.
@@ -140,9 +162,63 @@ for key_file in "${key_files[@]}"; do
   [[ -s $work/keys/$key_file ]] || fail "$key_file in secrets/host-keys/$host.yaml is empty"
 done
 
-# The installer's host key is built into the ISO. Every connection made
-# here accepts that key and no other, so the host's private keys go to the
-# fleet's installer or nowhere.
+# The installer makes a new SSH host key at every boot. Its public half is
+# read here through Proxmox: the node runs ssh-keygen in the VM, through the
+# VM's guest agent, which talks to the VM over a virtual serial port and not
+# over the network. A machine that takes the address answers for the
+# address, not for the VMID, so it cannot answer here.
+#
+# The node itself is checked against the host key given on the command line,
+# on a connection of its own, and the VMID against the address: the VM's
+# cloud-init settings have to give it this address.
+proxmox_address=${proxmox#*@}
+echo "$proxmox_address $proxmox_key_type $proxmox_key_data" >"$work/proxmox_known_hosts"
+proxmox_ssh_options=(
+  -o BatchMode=yes
+  -o ConnectTimeout=10
+  -o ControlMaster=no
+  -o ControlPath=none
+  -o ForwardAgent=no
+  -o StrictHostKeyChecking=yes
+  -o UserKnownHostsFile="$work/proxmox_known_hosts"
+  -o GlobalKnownHostsFile=/dev/null
+  -o HostKeyAlgorithms="$proxmox_key_type"
+  -o CheckHostIP=no
+  -o LogLevel=ERROR
+)
+on_proxmox() {
+  # shellcheck disable=SC2029 # every caller means its command for the node
+  ssh "${proxmox_ssh_options[@]}" "$proxmox" "$@" </dev/null
+}
+
+if ! vm_config=$(on_proxmox sudo -n qm config "$vmid"); then
+  fail "cannot read the settings of VM $vmid through $proxmox: check the login, that its host key is the one given, and that the account may run sudo qm without a password"
+fi
+if ! grep -Eq "^ipconfig0: (.*,)?ip=${address//./\\.}/" <<<"$vm_config"; then
+  fail "VM $vmid on $proxmox_address does not have the address $address in its cloud-init settings, so it is not the machine to install"
+fi
+
+# The guest agent starts with the installer, and sshd's key is made shortly
+# before sshd starts, so the first tries may find neither.
+installer_public_key=
+for _ in $(seq 1 30); do
+  if result=$(on_proxmox sudo -n qm guest exec "$vmid" --timeout 20 -- \
+    /run/current-system/sw/bin/ssh-keygen -y -f /etc/ssh/ssh_host_ed25519_key 2>/dev/null) \
+    && installer_public_key=$(jq -er 'select(.exitcode == 0) | ."out-data"' <<<"$result" 2>/dev/null); then
+    break
+  fi
+  installer_public_key=
+  sleep 10
+done
+[[ -n $installer_public_key ]] || fail "could not read the installer's host key from the guest agent of VM $vmid. Check in Proxmox that the VM is booted into the installer, so nothing was touched"
+read -r key_type key_data _ <<<"$installer_public_key"
+[[ $key_type == ssh-ed25519 && $key_data =~ ^[A-Za-z0-9+/]+=*$ ]] || fail "VM $vmid answered with no ed25519 public key"
+echo "$address $key_type $key_data" >"$work/known_hosts"
+
+# Every connection made here accepts that key and no other, so the host's
+# private keys go to the installer in VM $vmid or nowhere. None of them
+# shares a connection that ControlMaster in an ssh configuration left open,
+# such as one host-state made, since that one's host key was never checked.
 #
 # nixos-anywhere makes its own connections, which check no host key: it
 # puts StrictHostKeyChecking=no first, and ssh keeps the first value it is
@@ -150,16 +226,11 @@ done
 # which hold no secret in the clear. It sets no ForwardAgent of its own,
 # so the one given here is the first and holds: a machine that is not the
 # installer does not get the agent.
-if ! installer_public_key=$(sops decrypt --extract '["ssh_host_ed25519_key.pub"]' "$installer_key" 2>/dev/null); then
-  fail "cannot read secrets/installer.yaml, check SOPS_AGE_KEY or SOPS_AGE_KEY_FILE"
-fi
-read -r key_type key_data _ <<<"$installer_public_key"
-[[ $key_type == ssh-ed25519 && -n $key_data ]] || fail "secrets/installer.yaml holds no ed25519 public key"
-echo "$address $key_type $key_data" >"$work/known_hosts"
-
 ssh_options=(
   -o BatchMode=yes
   -o ConnectTimeout=10
+  -o ControlMaster=no
+  -o ControlPath=none
   -o ForwardAgent=no
   -o StrictHostKeyChecking=yes
   -o UserKnownHostsFile="$work/known_hosts"
@@ -174,7 +245,7 @@ on_target() {
 }
 
 if ! on_target test -e /etc/fleet-installer </dev/null 2>/dev/null; then
-  fail "the machine at $address is not booted into the fleet's installer, or its host key is not the installer's, so nothing was touched"
+  fail "the machine at $address is not booted into the fleet's installer, or its host key is not the one VM $vmid has, so nothing was touched"
 fi
 
 # nixos-anywhere takes a flake and no input to override in it. So it is

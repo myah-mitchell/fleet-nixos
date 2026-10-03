@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Builds the installer ISO for a fleet, with the fleet's installer host key
-# in it, and prints the path of the ISO.
+# Builds the installer ISO for a fleet and prints the path of the ISO.
 #
-# The key comes from secrets/installer.yaml, which new-installer-key makes.
-# It is decrypted into a private folder that is gone when the command ends,
-# and reaches the ISO through the flake's input named installer-key.
+# The ISO takes the SSH keys that may log in from the fleet's
+# nixos/fleet.json, and holds no secret. Its sshd makes a new host key at
+# every boot, which install-host reads through Proxmox.
 set -euo pipefail
 
 usage() {
@@ -19,11 +18,6 @@ the ISO file. Nothing is built when nothing changed since the last build.
                        command came from
   --help               Show this text
 
-Reading the installer's key needs the deploy key or the admin key, in
-SOPS_AGE_KEY or SOPS_AGE_KEY_FILE.
-
-The key ends up in the Nix store of the machine that builds, where every
-local account can read it, and in the ISO.
 END
 }
 
@@ -57,8 +51,7 @@ done
 
 [[ -d $fleet_directory ]] || fail "$fleet_directory is not a folder"
 fleet_directory=$(realpath "$fleet_directory")
-installer_key=$fleet_directory/secrets/installer.yaml
-[[ -f $installer_key ]] || fail "the fleet has no secrets/installer.yaml, make it with new-installer-key"
+[[ -f $fleet_directory/nixos/fleet.json ]] || fail "the fleet has no nixos/fleet.json, write it with ansible's nixos-sync.yml"
 
 # git+file takes the files git tracks and nothing else, so an ignored or
 # untracked file in the checkout never reaches the store.
@@ -77,19 +70,8 @@ if [[ -d $flake ]]; then
   fi
 fi
 
-work=$(mktemp -d)
-trap 'rm -rf "$work"' EXIT
-chmod 0700 "$work"
-
-mkdir "$work/installer-key"
-if ! (umask 077 && sops decrypt --extract '["ssh_host_ed25519_key"]' "$installer_key" >"$work/installer-key/ssh_host_ed25519_key" 2>/dev/null); then
-  fail "cannot read secrets/installer.yaml, check SOPS_AGE_KEY or SOPS_AGE_KEY_FILE"
-fi
-[[ -s $work/installer-key/ssh_host_ed25519_key ]] || fail "the key in secrets/installer.yaml is empty"
-
 if ! built=$(nix build "$flake#installer-iso" \
   --override-input fleet "$fleet_input" \
-  --override-input installer-key "path:$work/installer-key" \
   --no-write-lock-file --no-link --print-out-paths); then
   fail "building the installer ISO failed"
 fi

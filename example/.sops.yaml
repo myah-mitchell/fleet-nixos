@@ -24,11 +24,6 @@ creation_rules:
   - path_regex: ^secrets/hosts/ex02\.yaml$
     key_groups:
       - age: [*admin, *deploy, *ex02]
-  # The installer ISO's SSH host key, written by new-installer-key. No host
-  # reads it.
-  - path_regex: ^secrets/installer\.yaml$
-    key_groups:
-      - age: [*admin, *deploy]
   # Every host's SSH host keys. A host never reads them. The install puts
   # them on the host.
   - path_regex: ^secrets/host-keys/[^/]+\.yaml$
