@@ -210,7 +210,7 @@ for _ in $(seq 1 30); do
   installer_public_key=
   sleep 10
 done
-[[ -n $installer_public_key ]] || fail "could not read the installer's host key from the guest agent of VM $vmid. Check in Proxmox that the VM is booted into the installer, so nothing was touched"
+[[ -n $installer_public_key ]] || fail "could not read the installer's host key from the guest agent of VM $vmid, so nothing was touched. Check in Proxmox that the VM is booted into the installer"
 read -r key_type key_data _ <<<"$installer_public_key"
 [[ $key_type == ssh-ed25519 && $key_data =~ ^[A-Za-z0-9+/]+=*$ ]] || fail "VM $vmid answered with no ed25519 public key"
 echo "$address $key_type $key_data" >"$work/known_hosts"
