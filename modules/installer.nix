@@ -25,7 +25,7 @@
   nixpkgs.hostPlatform = "x86_64-linux";
 
   # The name Proxmox and OpenTofu know the ISO by.
-  image.baseName = lib.mkForce "nixos-fleet-installer";
+  image.baseName = lib.mkForce "fleet-nixos-installer";
 
   nix.settings.experimental-features = [
     "nix-command"
@@ -34,7 +34,7 @@
 
   # host-state looks for this file to tell the installer from an installed
   # host, and install-host refuses to touch a machine that lacks it.
-  environment.etc."fleet-installer".text = "nixos-fleet installer\n";
+  environment.etc."fleet-installer".text = "fleet-nixos installer\n";
 
   services.openssh = {
     enable = true;

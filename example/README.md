@@ -32,7 +32,7 @@ A real fleet also holds the Ansible inventory, the OpenTofu variables and the Ko
 | Komodo Core's public key | Made for this example. Its private half was thrown away |
 | CA certificate | Made for this example. Its private key was thrown away |
 
-The two JSON files under `nixos/hosts/` have the form that the ansible repo's `nixos-sync.yml` writes: sorted keys, two spaces of indentation, and a newline at the end.
+The two JSON files under `nixos/hosts/` have the form that the fleet-ansible repo's `nixos-sync.yml` writes: sorted keys, two spaces of indentation, and a newline at the end.
 
 ## Read a secret
 

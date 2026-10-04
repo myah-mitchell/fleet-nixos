@@ -248,14 +248,14 @@ mkdir "$work/flake"
 cat >"$work/flake/flake.nix" <<END
 {
   inputs = {
-    nixos-fleet.url = "$flake";
-    nixos-fleet.inputs.fleet.follows = "fleet";
+    fleet-nixos.url = "$flake";
+    fleet-nixos.inputs.fleet.follows = "fleet";
     fleet = {
       url = "$fleet_input";
       flake = false;
     };
   };
-  outputs = { nixos-fleet, ... }: { inherit (nixos-fleet) nixosConfigurations; };
+  outputs = { fleet-nixos, ... }: { inherit (fleet-nixos) nixosConfigurations; };
 }
 END
 

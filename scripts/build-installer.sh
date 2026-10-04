@@ -51,7 +51,7 @@ done
 
 [[ -d $fleet_directory ]] || fail "$fleet_directory is not a folder"
 fleet_directory=$(realpath "$fleet_directory")
-[[ -f $fleet_directory/nixos/fleet.json ]] || fail "the fleet has no nixos/fleet.json, write it with ansible's nixos-sync.yml"
+[[ -f $fleet_directory/nixos/fleet.json ]] || fail "the fleet has no nixos/fleet.json, write it with fleet-ansible's nixos-sync.yml"
 
 # git+file takes the files git tracks and nothing else, so an ignored or
 # untracked file in the checkout never reaches the store.
