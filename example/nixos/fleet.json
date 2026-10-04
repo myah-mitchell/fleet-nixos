@@ -1,6 +1,6 @@
 {
   "abbrName": "ex",
-  "adminList": "exadmins@example.com",
+  "adminList": "exadmins@myah-mitchell.com",
   "adminName": "exadmin",
   "adminSshKeys": [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJlfGdV3OUejKj9G9L2B3AdrXvVpRP0Y/YIWRxXt8xYC example-admin"
@@ -19,13 +19,13 @@
   "deploySshKeys": [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII+LvUx8tun9nH3oBy5YNg4kqFXE43Qbtpjl4cBrvS8W example-deploy"
   ],
-  "domainName": "example.com",
-  "komodoCoreAddress": "https://komodo.h.example.com",
+  "domainName": "myah-mitchell.com",
+  "komodoCoreAddress": "https://komodo.home.myah-mitchell.com",
   "komodoCorePublicKey": "MCowBQYDK2VuAyEA0/mEVDW8IZGwv0AWj+CgcCzORgLT2V/sAHwZERow7zo=",
-  "locationAbbr": "h",
-  "locationDomain": "h.example.com",
+  "locationAbbr": "home",
+  "locationDomain": "home.myah-mitchell.com",
   "ntpServers": [
-    "time.example.com"
+    "time.home.myah-mitchell.com"
   ],
   "shortName": "EXAMPLE",
   "sshBannerBody": "This system is for authorized use only.\nActivity on it is logged.",

@@ -39,6 +39,11 @@ Status: evaluated and built on a workstation, never run on a host. See [Not yet 
 | `<fleet-dir>` | Path of a checkout of the repository that describes the fleet, such as `/opt/fleet-private` |
 | `<host>` | Name of the host in the inventory, which is the name of its file in `nixos/hosts/` |
 | `<address>` | IPv4 address of the host |
+| `<flake>` | The flake to build from, when it is not the one the command came from |
+| `<user>` | The account to sign in to the host as, when it is not the deploy account `ansible` |
+| `<proxmox-login>` | The deploy account on the Proxmox node the VM runs on, such as `ansible@172.16.0.11` |
+| `<node-key>` | That Proxmox node's ed25519 SSH host key, as `ssh-ed25519 AAAA...` |
+| `<vmid>` | The VM's ID on that Proxmox node |
 
 ## Quick start
 
@@ -148,7 +153,7 @@ A port that Docker publishes bypasses the NixOS firewall, because Docker passes 
 
 ```json
 "portSources": [
-  { "port": 6379, "proto": "tcp", "sources": ["198.51.100.20/32"] }
+  { "port": 6379, "proto": "tcp", "sources": ["172.16.8.20/32"] }
 ]
 ```
 
@@ -175,7 +180,7 @@ nix profile add github:myah-mitchell/fleet-nixos#sops
 nix run .#new-host-key -- --fleet <fleet-dir> <host>
 nix run .#build-installer -- --fleet <fleet-dir> [--flake <flake>]
 nix run .#host-state   -- [--user <user>] <address>
-nix run .#install-host -- --fleet <fleet-dir> --proxmox <user@node> --proxmox-host-key <node-key> --vmid <vmid> [--flake <flake>] [--build-on local|remote] <host> <address>
+nix run .#install-host -- --fleet <fleet-dir> --proxmox <proxmox-login> --proxmox-host-key <node-key> --vmid <vmid> [--flake <flake>] [--build-on local|remote] <host> <address>
 nix run .#deploy-host  -- --fleet <fleet-dir> [--flake <flake>] [--user <user>] [--build-on local|remote] [--action switch|boot|test|dry-activate|dry-build] <host> <address>
 nix run .#reset-host   -- [--user <user>] --yes-wipe <host> <address>
 ```
@@ -261,7 +266,7 @@ The installer runs from memory and does four things:
 
     ```bash
     nix run .#install-host -- --fleet <fleet-dir> \
-      --proxmox <user@node> --proxmox-host-key "<node-key>" --vmid <vmid> \
+      --proxmox <proxmox-login> --proxmox-host-key "<node-key>" --vmid <vmid> \
       <host> <address>
     ```
 
