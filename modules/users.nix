@@ -4,6 +4,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -50,7 +51,9 @@ in
       openssh.authorizedKeys.keys = cfg.adminSshKeys;
     };
 
+    # The client logs in to zsh, the shell its dotfiles are written for.
     ${cfg.clientAccount} = person // {
+      shell = pkgs.zsh;
       hashedPasswordFile = clientPasswordFile;
       openssh.authorizedKeys.keys = cfg.clientSshKeys;
     };
