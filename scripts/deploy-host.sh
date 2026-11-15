@@ -101,9 +101,13 @@ else
 fi
 
 work=$(mktemp -d)
-trap 'rm -rf "$work"' EXIT
+# The shared connection below is closed before its socket's folder goes.
+trap 'ssh -o ControlPath="$work/ssh" -O exit "$user@$address" >/dev/null 2>&1; rm -rf "$work"' EXIT
 # NIX_SSHOPTS is split on whitespace, so the path in it can hold none.
 [[ $work != *[[:space:]]* ]] || fail "the temporary folder $work has a space in its path, set TMPDIR to one without"
+# The shared connection's socket is $work/ssh, and ssh makes it under a
+# longer name first. A socket's path has to stay under 108 bytes.
+((${#work} <= 80)) || fail "the temporary folder $work has too long a path for an ssh socket, set TMPDIR to a shorter one"
 
 if ! public_key=$(sops decrypt --extract '["ssh_host_ed25519_key.pub"]' "$host_keys" 2>/dev/null); then
   fail "cannot decrypt secrets/host-keys/$host.yaml, check SOPS_AGE_KEY or SOPS_AGE_KEY_FILE"
@@ -112,9 +116,17 @@ read -r key_type key_data _ <<<"$public_key"
 [[ $key_type == ssh-ed25519 && -n $key_data ]] || fail "secrets/host-keys/$host.yaml holds no ed25519 public key"
 echo "$address $key_type $key_data" >"$work/known_hosts"
 
-# ControlPath=none keeps ssh from using a connection that ControlMaster in an
-# ssh configuration left open, whose host key was not checked against this.
-export NIX_SSHOPTS="-o BatchMode=yes -o ConnectTimeout=10 -o ControlMaster=no -o ControlPath=none -o ForwardAgent=no -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$work/known_hosts -o HostKeyAlgorithms=ssh-ed25519"
+# Every ssh that nixos-rebuild runs shares one connection, which the first
+# of them opens and checks against the key above. The host's firewall
+# refuses the tenth new SSH connection from one address within thirty
+# seconds, and nixos-rebuild alone opens one for each command it runs.
+#
+# The socket is in $work, so no connection that ControlMaster in an ssh
+# configuration left open is used, whose host key was not checked against
+# this. $work serves one host, so the socket's name needs no %C.
+# nixos-rebuild adds ControlMaster and ControlPath options of its own after
+# these, and ssh keeps the first value it is given for an option.
+export NIX_SSHOPTS="-o BatchMode=yes -o ConnectTimeout=10 -o ControlMaster=auto -o ControlPath=$work/ssh -o ControlPersist=60 -o ForwardAgent=no -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$work/known_hosts -o HostKeyAlgorithms=ssh-ed25519"
 
 arguments=(
   "$action"

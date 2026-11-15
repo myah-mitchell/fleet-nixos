@@ -18,8 +18,10 @@
           ip46tables -A nixos-fw -p tcp --dport 113 -j REJECT --reject-with tcp-reset
 
           # SSH, with a rate limit: an address that opens ten connections
-          # within thirty seconds has the tenth refused. One pass of the
-          # playbooks makes about six in a row.
+          # within thirty seconds has the tenth refused. A pass of the
+          # playbooks makes four: three from host-state, and one from
+          # deploy-host, which sends all of nixos-rebuild's commands over
+          # one shared connection.
           ip46tables -A nixos-fw -p tcp --dport 22 -m conntrack --ctstate NEW -m recent --name ssh --set
           ip46tables -A nixos-fw -p tcp --dport 22 -m conntrack --ctstate NEW -m recent --name ssh --update --seconds 30 --hitcount 10 -j nixos-fw-log-refuse
           ip46tables -A nixos-fw -p tcp --dport 22 -j nixos-fw-accept
