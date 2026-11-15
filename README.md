@@ -337,7 +337,7 @@ Secrets are sops files in the fleet, encrypted for age keys. There are three kin
 
 | File | Encrypted for | Keys inside |
 | --- | --- | --- |
-| `secrets/fleet.yaml` | admin, deploy, every host | `server-password-hash`, `komodo-onboarding-key` |
+| `secrets/fleet.yaml` | admin, deploy, every host | `server-password-hash`, `client-password-hash`, `komodo-onboarding-key` |
 | `secrets/hosts/<host>.yaml` | admin, deploy, that host | None yet |
 | `secrets/host-keys/<host>.yaml` | admin, deploy | The host's four SSH key files |
 
@@ -354,7 +354,7 @@ cd <fleet-dir>
 nix shell nixpkgs#sops -c sops secrets/fleet.yaml
 ```
 
-`server-password-hash` is the password of root, the admin account and the client account, as a hash. Make one with:
+`server-password-hash` is the password of root and the admin account, as a hash, and `client-password-hash` is the password of the client account. Make each with:
 
 ```bash
 nix shell nixpkgs#mkpasswd -c mkpasswd -m yescrypt

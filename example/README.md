@@ -26,7 +26,8 @@ A real fleet also holds the Ansible inventory, the OpenTofu variables and the Ko
 | --- | --- |
 | Addresses | `172.16.7.91` and `172.16.7.92`, made up for the example |
 | Domain | `home.myah-mitchell.com` |
-| Password of the accounts | `example` |
+| Password of root and the admin account | `example` |
+| Password of the client account | `example-client` |
 | `komodo-onboarding-key` | A placeholder that no Komodo Core accepts |
 | SSH keys of the admin, deploy and client accounts | Made for this example. Their private halves were thrown away |
 | Komodo Core's public key | Made for this example. Its private half was thrown away |

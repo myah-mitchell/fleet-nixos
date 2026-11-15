@@ -9,6 +9,7 @@
 let
   cfg = config.fleet;
   passwordFile = config.sops.secrets.server-password-hash.path;
+  clientPasswordFile = config.sops.secrets.client-password-hash.path;
 
   passwordlessSudo = user: {
     users = [ user ];
@@ -33,10 +34,11 @@ in
 {
   users.mutableUsers = false;
 
-  # One password for root, the admin and the client, kept as a hash. It
-  # has to be readable before the accounts are made, which is earlier than
-  # other secrets are.
+  # Two passwords, kept as hashes: one for root and the admin, and one for
+  # the client. Both have to be readable before the accounts are made, which
+  # is earlier than other secrets are.
   sops.secrets.server-password-hash.neededForUsers = true;
+  sops.secrets.client-password-hash.neededForUsers = true;
 
   users.users = {
     # The password works on the console only, which is the way in when
@@ -49,7 +51,7 @@ in
     };
 
     ${cfg.clientAccount} = person // {
-      hashedPasswordFile = passwordFile;
+      hashedPasswordFile = clientPasswordFile;
       openssh.authorizedKeys.keys = cfg.clientSshKeys;
     };
 
