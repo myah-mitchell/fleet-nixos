@@ -6,6 +6,7 @@
     ./certificates.nix
     ./disks.nix
     ./docker.nix
+    ./dotfiles.nix
     ./fail2ban.nix
     ./firewall.nix
     ./komodo-periphery.nix

@@ -2,6 +2,7 @@
   "features": {
     "auditd": false,
     "docker": false,
+    "dotfiles": false,
     "fail2ban": true,
     "firewall": true,
     "komodo": false,

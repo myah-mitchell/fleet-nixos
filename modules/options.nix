@@ -172,6 +172,7 @@ in
       auditd = feature "Record security events with the Linux audit system.";
       mail = feature "Send mail for root to the admin list.";
       mosh = feature "Accept mosh sessions.";
+      dotfiles = feature "Let the fleet-ansible run set up the client account's dotfiles with dfutil.";
     };
     swapMiB = mkOption {
       type = types.ints.unsigned;

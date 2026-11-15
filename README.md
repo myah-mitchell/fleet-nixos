@@ -122,6 +122,7 @@ Every host gets the base modules. The `features` object in its JSON file switche
 | `auditd` | The Linux audit system with the fleet's rules |
 | `mail` | Postfix, sending mail for root to the admin list |
 | `mosh` | mosh and its UDP ports |
+| `dotfiles` | Python and nix-ld, so that fleet-ansible can log in and have dfutil set up the client account's dotfiles, whose glibc builds run through nix-ld |
 
 The base modules cover packages, accounts, CA certificates, chrony, the network, sshd (keys only, no passwords) and its banner, journald and syslog forwarding, the swap file, the guest agent, GRUB, and the serial console.
 
