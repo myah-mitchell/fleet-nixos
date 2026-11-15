@@ -65,10 +65,17 @@ in
     };
   };
 
-  security.sudo.extraRules = map passwordlessSudo [
-    cfg.adminName
-    cfg.clientAccount
-    cfg.deployAccount
+  # The admin and the client give their password to sudo. The deploy account
+  # has no password, and deploy-host runs sudo as it unattended.
+  security.sudo.extraRules = [
+    {
+      users = [
+        cfg.adminName
+        cfg.clientAccount
+      ];
+      commands = [ "ALL" ];
+    }
+    (passwordlessSudo cfg.deployAccount)
   ];
 
   # A deploy copies store paths to the host as the deploy account. Only a
